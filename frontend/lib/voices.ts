@@ -27,6 +27,13 @@ export function saveVoice(voice_id: string): void {
   localStorage.setItem(KEY, JSON.stringify(voices.slice(0, 5)));
 }
 
+export function renameVoice(voice_id: string, name: string): void {
+  const voices = getSavedVoices().map((v) =>
+    v.voice_id === voice_id ? { ...v, name } : v
+  );
+  localStorage.setItem(KEY, JSON.stringify(voices));
+}
+
 export function deleteVoice(voice_id: string): void {
   const voices = getSavedVoices().filter((v) => v.voice_id !== voice_id);
   localStorage.setItem(KEY, JSON.stringify(voices));
