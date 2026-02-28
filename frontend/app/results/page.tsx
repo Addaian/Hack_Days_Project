@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import AudioPlayer from "@/components/AudioPlayer";
 import TranscriptDiff from "@/components/TranscriptDiff";
 import TranscriptEditor from "@/components/TranscriptEditor";
-import { getResult, clearResult, clearAll, type VoiceUpResult } from "@/lib/store";
+import { getResult, clearResult, clearAll, type AltoResult } from "@/lib/store";
 
 export default function ResultsPage() {
   const router = useRouter();
-  const [result, setResultState] = useState<VoiceUpResult | null>(null);
+  const [result, setResultState] = useState<AltoResult | null>(null);
   const [cleanedAudioUrl, setCleanedAudioUrl] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -66,18 +66,24 @@ export default function ResultsPage() {
   return (
     <>
       {/* Hero */}
-      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white py-14 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-400/30 rounded-full px-4 py-1.5 text-green-300 text-xs font-bold uppercase tracking-widest mb-5">
-            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+      <div className="relative bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 border-b border-amber-200/50 py-16 px-4 overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <div className="absolute top-10 left-10 w-72 h-72 bg-amber-900 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-rose-900 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-3xl mx-auto text-center relative">
+          <div className="inline-flex items-center gap-2 bg-emerald-100 border border-emerald-300 rounded-full px-5 py-2 text-emerald-800 text-xs font-bold uppercase tracking-widest mb-6 shadow-sm">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-            Complete
+            Analysis Complete
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent pb-1">
-            Your Results
+          <h1 className="font-display text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-amber-900 via-orange-800 to-amber-900 pb-1 leading-tight">
+            Your Refined Speech
           </h1>
-          <p className="text-slate-400 mt-2 text-base">Here&apos;s your cleaned-up speech, ready to use.</p>
+          <p className="font-serif text-amber-900/70 mt-3 text-lg italic">Polished, confident, and ready to inspire</p>
         </div>
       </div>
 
@@ -118,7 +124,7 @@ export default function ResultsPage() {
               <AudioPlayer src={result.original_audio_url} label="Original" />
             </div>
             <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
-              <AudioPlayer src={cleanedAudioUrl} label="Cleaned Voice" downloadFilename="voiceup-cleaned.mp3" />
+              <AudioPlayer src={cleanedAudioUrl} label="Cleaned Voice" downloadFilename="alto-cleaned.mp3" />
             </div>
           </div>
         </Section>
@@ -184,7 +190,7 @@ export default function ResultsPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 pb-8">
           <button
             onClick={handleRedo}
-            className="w-full sm:w-auto flex items-center justify-center gap-2.5 border-2 border-indigo-300 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-400 font-bold px-8 py-3.5 rounded-xl transition-all shadow-sm hover:shadow-md group"
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 border-2 border-amber-400 text-amber-900 hover:bg-amber-50 hover:border-amber-500 font-bold px-8 py-3.5 rounded-xl transition-all shadow-md shadow-amber-900/5 hover:shadow-lg hover:shadow-amber-900/10 group"
           >
             <svg className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -193,7 +199,7 @@ export default function ResultsPage() {
           </button>
           <button
             onClick={handleStartOver}
-            className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-800 to-amber-900 hover:from-amber-900 hover:to-amber-950 text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md shadow-amber-900/20 hover:shadow-lg hover:shadow-amber-900/30"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -217,27 +223,27 @@ function StatCard({
   icon: React.ReactNode;
   accent?: "red" | "green" | "default";
 }) {
-  const borderColor = accent === "red" ? "border-l-red-400" : accent === "green" ? "border-l-emerald-400" : "border-l-indigo-200";
-  const valueColor = accent === "red" ? "text-red-600" : accent === "green" ? "text-emerald-600" : "text-gray-900";
-  const iconBg = accent === "red" ? "bg-red-50 text-red-400" : accent === "green" ? "bg-emerald-50 text-emerald-400" : "bg-indigo-50 text-indigo-400";
+  const borderColor = accent === "red" ? "border-l-rose-500" : accent === "green" ? "border-l-emerald-500" : "border-l-amber-400";
+  const valueColor = accent === "red" ? "text-rose-700" : accent === "green" ? "text-emerald-700" : "text-amber-900";
+  const iconBg = accent === "red" ? "bg-rose-50 text-rose-500" : accent === "green" ? "bg-emerald-50 text-emerald-500" : "bg-amber-50 text-amber-600";
   return (
-    <div className={`bg-white rounded-xl border border-gray-100 border-l-4 ${borderColor} shadow-sm p-4 flex flex-col gap-2`}>
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}>
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <div className={`bg-white/90 backdrop-blur-sm rounded-2xl border border-amber-100 border-l-4 ${borderColor} shadow-md shadow-amber-900/5 p-5 flex flex-col gap-2.5`}>
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}>
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           {icon}
         </svg>
       </div>
-      <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
-      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold leading-tight">{label}</p>
+      <p className={`font-display text-3xl font-bold ${valueColor}`}>{value}</p>
+      <p className="font-serif text-xs text-amber-900/60 uppercase tracking-wide font-semibold leading-tight">{label}</p>
     </div>
   );
 }
 
 function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+    <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg shadow-amber-900/5 border border-amber-200/50 p-8 flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-gray-900">{title}</h2>
+        <h2 className="font-display text-xl font-bold text-amber-950">{title}</h2>
         {action}
       </div>
       {children}

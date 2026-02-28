@@ -15,7 +15,7 @@ BASE_URL = "https://api.elevenlabs.io/v1"
 
 def create_clone(audio_bytes: bytes, name: str | None = None) -> str:
     """Upload a voice sample to ElevenLabs and return the new voice_id."""
-    voice_name = name or f"voiceup-{uuid.uuid4().hex[:8]}"
+    voice_name = name or f"alto-{uuid.uuid4().hex[:8]}"
     headers = {"xi-api-key": _api_key()}
 
     files = {

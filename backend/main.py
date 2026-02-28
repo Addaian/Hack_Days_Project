@@ -17,7 +17,7 @@ import stt_client
 import gpt_client
 import elevenlabs_client
 
-app = FastAPI(title="VoiceUp API")
+app = FastAPI(title="Alto API")
 
 _extra_origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 _origins = ["http://localhost:3000"] + _extra_origins
@@ -31,7 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-AUDIO_DIR = Path(tempfile.gettempdir()) / "voiceup_audio"
+AUDIO_DIR = Path(tempfile.gettempdir()) / "alto_audio"
 AUDIO_DIR.mkdir(exist_ok=True)
 
 app.mount("/audio", StaticFiles(directory=str(AUDIO_DIR)), name="audio")

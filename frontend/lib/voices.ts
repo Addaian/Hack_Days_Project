@@ -4,7 +4,7 @@ export interface SavedVoice {
   createdAt: number;
 }
 
-const KEY = "voiceup_voices";
+const KEY = "alto_voices";
 
 export function getSavedVoices(): SavedVoice[] {
   if (typeof window === "undefined") return [];

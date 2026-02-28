@@ -3,7 +3,7 @@ export interface FillerEntry {
   count: number;
 }
 
-export interface VoiceUpResult {
+export interface AltoResult {
   raw_transcript: string;
   cleaned_transcript: string;
   fillers: FillerEntry[];
@@ -17,12 +17,12 @@ export interface VoiceUpResult {
   speech_duration?: number;
 }
 
-let _result: VoiceUpResult | null = null;
+let _result: AltoResult | null = null;
 let _originalBlob: Blob | null = null;
 let _voiceSampleBlob: Blob | null = null;
 let _speechBlob: Blob | null = null;
 
-export function setResult(result: VoiceUpResult, originalBlob: Blob) {
+export function setResult(result: AltoResult, originalBlob: Blob) {
   _result = result;
   _originalBlob = originalBlob;
 }
@@ -36,7 +36,7 @@ export function getRedoBlobs(): { voiceSampleBlob: Blob | null; speechBlob: Blob
   return { voiceSampleBlob: _voiceSampleBlob, speechBlob: _speechBlob };
 }
 
-export function getResult(): VoiceUpResult | null {
+export function getResult(): AltoResult | null {
   return _result;
 }
 

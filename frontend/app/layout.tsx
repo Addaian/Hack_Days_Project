@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "VoiceUp — Speak cleaner, sound better",
-  description: "Record yourself speaking and hear a cleaned-up version in your own cloned voice.",
+  title: "Alto — Master the Art of Public Speaking",
+  description: "Transform your speaking with AI-powered coaching. Record yourself and hear a polished version in your own voice.",
 };
 
 export default function RootLayout({
@@ -13,7 +13,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-50 min-h-screen antialiased">{children}</body>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Crimson+Text:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+      </head>
+      <body className="bg-gradient-to-br from-amber-50/30 via-white to-orange-50/30 min-h-screen antialiased">{children}</body>
     </html>
   );
 }
