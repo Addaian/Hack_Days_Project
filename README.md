@@ -11,7 +11,7 @@ Record yourself speaking and hear a cleaned-up version played back in your own c
 1. **Voice Sample** — Record a 30-second reading to clone your voice
 2. **Main Recording** — Record your actual speech (up to 5 minutes)
 3. **Configure** — Pick target audience and style (optional)
-4. **Process** — Whisper transcribes → GPT-4o cleans → ElevenLabs speaks in your voice
+4. **Process** — ElevenLabs Scribe transcribes → GPT-4o cleans → ElevenLabs speaks in your voice
 5. **Results** — Side-by-side original vs. cleaned audio, transcript diff, filler stats
 
 ---
@@ -22,7 +22,7 @@ Record yourself speaking and hear a cleaned-up version played back in your own c
 |-------|--------|
 | Frontend | Next.js 16 + Tailwind CSS |
 | Backend | Python FastAPI |
-| Transcription | OpenAI Whisper (`whisper-1`) |
+| Transcription | ElevenLabs Scribe (`scribe_v1`) |
 | LLM Cleaning | GPT-4o |
 | Voice Clone + TTS | ElevenLabs Instant Voice Clone |
 
@@ -66,7 +66,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 ├── backend/
 │   ├── main.py               # FastAPI app — /health, /clone, /analyze
-│   ├── whisper_client.py     # Whisper transcription
+│   ├── stt_client.py         # ElevenLabs Scribe transcription
 │   ├── gpt_client.py         # GPT-4o filler removal
 │   ├── elevenlabs_client.py  # Voice clone + TTS
 │   └── requirements.txt

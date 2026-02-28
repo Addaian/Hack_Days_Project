@@ -32,7 +32,7 @@ Monorepo with two independent services:
 
 ```
 browser → POST /clone  → ElevenLabs (voice clone) → voice_id
-browser → POST /analyze → Whisper → GPT-4o → ElevenLabs TTS → .mp3 saved to /tmp/voiceup_audio/
+browser → POST /analyze → ElevenLabs Scribe STT → GPT-4o → ElevenLabs TTS → .mp3 saved to /tmp/voiceup_audio/
 ```
 
 ### Frontend state management
@@ -51,7 +51,7 @@ Each external API has its own module with a singleton client:
 
 | File | Singleton | Key function |
 |------|-----------|--------------|
-| `whisper_client.py` | `_client` (OpenAI, 120s timeout) | `transcribe(audio_bytes, filename)` |
+| `stt_client.py` | none (httpx per-call, reuses `_api_key()` from elevenlabs_client) | `transcribe(audio_bytes, filename)` |
 | `gpt_client.py` | `_client` (OpenAI, 60s timeout) | `clean_transcript(raw, audience, style)` |
 | `elevenlabs_client.py` | none (httpx per-call) | `create_clone(audio_bytes)`, `text_to_speech(text, voice_id)` |
 
@@ -67,7 +67,7 @@ Hardcoded to allow `localhost:3000` and `*.vercel.app`. Additional origins can b
 
 | Var | Where | Purpose |
 |-----|-------|---------|
-| `OPENAI_API_KEY` | `backend/.env` | Whisper + GPT-4o |
-| `ELEVENLABS_API_KEY` | `backend/.env` | Voice clone + TTS |
+| `OPENAI_API_KEY` | `backend/.env` | GPT-4o cleaning |
+| `ELEVENLABS_API_KEY` | `backend/.env` | Scribe STT + voice clone + TTS |
 | `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | Backend base URL (default: `http://localhost:8000`) |
 | `ALLOWED_ORIGINS` | backend env | Extra CORS origins |

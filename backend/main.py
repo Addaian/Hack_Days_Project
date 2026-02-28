@@ -12,7 +12,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-import whisper_client
+import stt_client
 import gpt_client
 import elevenlabs_client
 
@@ -142,7 +142,7 @@ async def analyze(
 
     # Step 1: Transcribe
     try:
-        raw_transcript = whisper_client.transcribe(
+        raw_transcript = stt_client.transcribe(
             audio_bytes, filename=audio.filename or "audio.webm"
         )
     except Exception as e:
