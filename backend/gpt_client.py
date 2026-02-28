@@ -34,6 +34,7 @@ def clean_transcript(
     style_map = {
         "More Confident": "confident and assertive",
         "Humorous": "lightly humorous and engaging",
+        "Sad": "melancholic and somber",
     }
     style_parts = [style_map.get(s, s.lower()) for s in styles if s in style_map]
     style_line = f" Adjust tone to be {' and '.join(style_parts)}." if style_parts else ""

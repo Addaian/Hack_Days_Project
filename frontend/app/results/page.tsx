@@ -62,7 +62,6 @@ export default function ResultsPage() {
   const rawWordCount = result.raw_transcript.trim().split(/\s+/).filter(Boolean).length;
   const cleanedWordCount = result.cleaned_transcript.trim().split(/\s+/).filter(Boolean).length;
   const wordsSaved = Math.max(0, rawWordCount - cleanedWordCount);
-  const fillerRate = rawWordCount > 0 ? Math.round((result.total_fillers / rawWordCount) * 100) : 0;
 
   return (
     <>
@@ -99,16 +98,16 @@ export default function ResultsPage() {
             accent="default"
           />
           <StatCard
+            label="Cleaned WPM"
+            value={hasWpm ? String(result.cleaned_wpm) : "—"}
+            icon={<path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />}
+            accent="green"
+          />
+          <StatCard
             label="Words Saved"
             value={String(wordsSaved)}
             icon={<path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />}
             accent="green"
-          />
-          <StatCard
-            label="Filler Rate"
-            value={rawWordCount > 0 ? `${fillerRate}%` : "—"}
-            icon={<path strokeLinecap="round" strokeLinejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />}
-            accent={fillerRate > 10 ? "red" : "green"}
           />
         </div>
 

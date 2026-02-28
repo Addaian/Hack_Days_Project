@@ -5,3 +5,4 @@ openai
 elevenlabs
 python-dotenv
 httpx
+mutagen

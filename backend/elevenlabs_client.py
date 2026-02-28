@@ -44,10 +44,19 @@ def create_clone(audio_bytes: bytes, name: str | None = None) -> str:
     return voice_id
 
 
-def text_to_speech(text: str, voice_id: str) -> bytes:
-    """Convert text to speech using a cloned voice, return audio bytes (MP3)."""
+def text_to_speech(text: str, voice_id: str, speed: float = 0.85) -> bytes:
+    """Convert text to speech using a cloned voice, return audio bytes (MP3).
+
+    Args:
+        text: The text to convert to speech
+        voice_id: The ElevenLabs voice ID to use
+        speed: Speech speed multiplier (0.5 to 1.0). Lower is slower. Default 0.85.
+    """
     if not text.strip():
         raise ValueError("Cannot generate TTS for empty text.")
+
+    # Clamp speed to valid range
+    speed = max(0.5, min(1.0, speed))
 
     headers = {
         "xi-api-key": _api_key(),
@@ -61,7 +70,7 @@ def text_to_speech(text: str, voice_id: str) -> bytes:
             "stability": 0.55,
             "similarity_boost": 0.75,
         },
-        "speed": 0.85,
+        "speed": speed,
     }
 
     response = httpx.post(

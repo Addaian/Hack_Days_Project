@@ -111,24 +111,45 @@ export default function Recorder({
     if (!file) return;
     setError(null);
 
-    const arrayBuffer = await file.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: file.type || "audio/mpeg" });
-    const tempUrl = URL.createObjectURL(blob);
-    const audio = new Audio(tempUrl);
+    try {
+      // Validate file type
+      if (!file.type.startsWith("audio/")) {
+        setError("Please select a valid audio file.");
+        return;
+      }
 
-    audio.addEventListener("loadedmetadata", () => {
-      const dur = isFinite(audio.duration) ? Math.round(audio.duration) : 0;
-      URL.revokeObjectURL(tempUrl);
-      setUploadedFileName(file.name);
-      setElapsed(dur);
-      elapsedRef.current = dur;
-      setStatus("done");
-      onComplete(blob, dur);
-    });
-    audio.addEventListener("error", () => {
-      URL.revokeObjectURL(tempUrl);
-      setError("Could not read audio file. Make sure it's a valid audio format.");
-    });
+      const arrayBuffer = await file.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: file.type || "audio/mpeg" });
+      const tempUrl = URL.createObjectURL(blob);
+      const audio = new Audio(tempUrl);
+
+      // Add timeout for metadata loading
+      const timeout = setTimeout(() => {
+        URL.revokeObjectURL(tempUrl);
+        setError("Audio file took too long to load. Try a different file.");
+      }, 10000);
+
+      audio.addEventListener("loadedmetadata", () => {
+        clearTimeout(timeout);
+        const dur = isFinite(audio.duration) ? Math.round(audio.duration) : 0;
+        URL.revokeObjectURL(tempUrl);
+        setUploadedFileName(file.name);
+        setElapsed(dur);
+        elapsedRef.current = dur;
+        setStatus("done");
+        onComplete(blob, dur);
+      });
+      audio.addEventListener("error", () => {
+        clearTimeout(timeout);
+        URL.revokeObjectURL(tempUrl);
+        setError("Could not read audio file. Make sure it's a valid audio format.");
+      });
+    } catch (err) {
+      setError("Failed to process the audio file. Please try again.");
+    }
+
+    // Reset file input so the same file can be selected again
+    e.target.value = "";
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;

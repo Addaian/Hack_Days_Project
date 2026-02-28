@@ -13,27 +13,53 @@ interface TranscriptDiffProps {
   fillers: Filler[];
 }
 
+// Simple word-level diff to find which words were removed
+function computeWordDiff(raw: string, cleaned: string) {
+  const rawWords = raw.split(/\s+/).filter(w => w.trim());
+  const cleanedWords = cleaned.split(/\s+/).filter(w => w.trim());
+
+  // Normalize word by removing punctuation and lowercasing
+  const normalize = (word: string) => word.toLowerCase().replace(/[.,!?;:"']/g, '').trim();
+
+  // Create a map of cleaned words with their counts (using normalized keys)
+  const cleanedWordMap = new Map<string, number>();
+  cleanedWords.forEach(word => {
+    const normalized = normalize(word);
+    if (normalized) {
+      cleanedWordMap.set(normalized, (cleanedWordMap.get(normalized) || 0) + 1);
+    }
+  });
+
+  // Mark each raw word as removed or kept
+  const result: Array<{ word: string; removed: boolean }> = [];
+
+  rawWords.forEach(word => {
+    const normalized = normalize(word);
+    if (!normalized) {
+      // Empty after normalization, keep it
+      result.push({ word, removed: false });
+      return;
+    }
+
+    const count = cleanedWordMap.get(normalized) || 0;
+
+    if (count > 0) {
+      // Word exists in cleaned, decrement count
+      cleanedWordMap.set(normalized, count - 1);
+      result.push({ word, removed: false });
+    } else {
+      // Word was removed
+      result.push({ word, removed: true });
+    }
+  });
+
+  return result;
+}
+
 export default function TranscriptDiff({ raw, cleaned, fillers }: TranscriptDiffProps) {
-  const fillerWords = useMemo(
-    () => fillers.map((f) => f.word.toLowerCase()),
-    [fillers]
-  );
-
   const highlighted = useMemo(() => {
-    if (!fillerWords.length) return [{ text: raw, isFiller: false }];
-
-    // Sort longest first so multi-word fillers match before their component words
-    const sorted = [...fillerWords].sort((a, b) => b.length - a.length);
-    const pattern = sorted.map((f) => `\\b${f}\\b`).join("|");
-    const regex = new RegExp(`(${pattern})`, "gi");
-    const parts = raw.split(regex).filter((p) => p !== undefined);
-    const fillerSet = new Set(fillerWords);
-
-    return parts.map((part) => ({
-      text: part,
-      isFiller: fillerSet.has(part.toLowerCase()),
-    }));
-  }, [raw, fillerWords]);
+    return computeWordDiff(raw, cleaned);
+  }, [raw, cleaned]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -41,12 +67,12 @@ export default function TranscriptDiff({ raw, cleaned, fillers }: TranscriptDiff
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Original</p>
         <p className="text-sm text-gray-700 leading-relaxed">
           {highlighted.map((part, i) =>
-            part.isFiller ? (
+            part.removed ? (
               <span key={i} className="line-through text-red-500 font-medium">
-                {part.text}
+                {part.word}{" "}
               </span>
             ) : (
-              <span key={i}>{part.text}</span>
+              <span key={i}>{part.word} </span>
             )
           )}
         </p>
