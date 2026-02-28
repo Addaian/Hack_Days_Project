@@ -18,7 +18,6 @@ import elevenlabs_client
 
 app = FastAPI(title="VoiceUp API")
 
-# ALLOWED_ORIGINS env var: comma-separated list of extra origins (e.g. your Vercel URL)
 _extra_origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 _origins = ["http://localhost:3000"] + _extra_origins
 
@@ -31,15 +30,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Temp dir for generated audio files
 AUDIO_DIR = Path(tempfile.gettempdir()) / "voiceup_audio"
 AUDIO_DIR.mkdir(exist_ok=True)
 
 app.mount("/audio", StaticFiles(directory=str(AUDIO_DIR)), name="audio")
 
-# Pre-compile filler patterns once at startup (longest first to catch multi-word before single)
 FILLERS = [
-    "you know", "sort of", "okay so",  # multi-word first
+    "you know", "sort of", "okay so",
     "basically", "literally",
     "um", "uh", "like", "right",
 ]
@@ -48,11 +45,9 @@ _FILLER_PATTERNS = [
     for filler in FILLERS
 ]
 
-# Allowed values for audience and style
-_VALID_AUDIENCE = {"General", "Investors", "Technical"}
-_VALID_STYLE = {"Neutral", "More Confident", "Add Humor"}
+_VALID_AUDIENCE = {"General", "Professional", "Technical"}
+_VALID_STYLE = {"More Confident", "Humorous"}
 
-# Audio files older than 1 hour are cleaned up on each request
 _AUDIO_TTL_SECONDS = 3600
 
 
@@ -85,6 +80,12 @@ def calculate_wpm(text: str, duration_seconds: float) -> int:
     return round(words / (duration_seconds / 60))
 
 
+def _save_audio(audio_bytes: bytes) -> str:
+    filename = f"{uuid.uuid4().hex}.mp3"
+    (AUDIO_DIR / filename).write_bytes(audio_bytes)
+    return f"/audio/{filename}"
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -93,22 +94,18 @@ def health():
 @app.post("/clone")
 async def clone(voice_sample: UploadFile = File(...)):
     audio_bytes = await voice_sample.read()
-
     if len(audio_bytes) < 1000:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Voice sample is too short or empty. Please record at least 5 seconds.",
         )
-
     try:
         voice_id = elevenlabs_client.create_clone(audio_bytes)
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Voice cloning failed: {str(e)}",
-        )
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail=f"Voice cloning failed: {str(e)}")
     return {"voice_id": voice_id}
 
 
@@ -116,75 +113,53 @@ async def clone(voice_sample: UploadFile = File(...)):
 async def analyze(
     audio: UploadFile = File(...),
     voice_id: str = Form(...),
-    audience: str = Form(default="General"),
-    style: str = Form(default="Neutral"),
+    audiences: str = Form(default="General"),
+    styles: str = Form(default=""),
     duration: float = Form(default=0),
 ):
-    # Validate inputs
     if not voice_id.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="voice_id is required.",
-        )
-    if audience not in _VALID_AUDIENCE:
-        audience = "General"
-    if style not in _VALID_STYLE:
-        style = "Neutral"
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="voice_id is required.")
+
+    audience_list = [a.strip() for a in audiences.split(",") if a.strip()]
+    style_list = [s.strip() for s in styles.split(",") if s.strip()]
+    audience_list = [a for a in audience_list if a in _VALID_AUDIENCE] or ["General"]
+    style_list = [s for s in style_list if s in _VALID_STYLE]
 
     audio_bytes = await audio.read()
     if len(audio_bytes) < 1000:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Audio is too short or empty. Please record a longer clip.",
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Audio is too short or empty. Please record a longer clip.")
 
     _cleanup_old_audio()
 
-    # Step 1: Transcribe
     try:
-        raw_transcript = stt_client.transcribe(
-            audio_bytes, filename=audio.filename or "audio.webm"
-        )
+        raw_transcript = stt_client.transcribe(audio_bytes, filename=audio.filename or "audio.webm")
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Transcription failed: {str(e)}",
-        )
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail=f"Transcription failed: {str(e)}")
 
     if not raw_transcript.strip():
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="No speech detected in the recording. Please try again.",
-        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail="No speech detected in the recording. Please try again.")
 
-    # Step 2: Count fillers + WPM
     fillers, total_fillers = count_fillers(raw_transcript)
     original_wpm = calculate_wpm(raw_transcript, duration)
 
-    # Step 3: Clean transcript
     try:
-        cleaned_transcript = gpt_client.clean_transcript(raw_transcript, audience, style)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Cleaning failed: {str(e)}",
+        cleaned_transcript = gpt_client.clean_transcript(
+            raw_transcript, audiences=audience_list, styles=style_list
         )
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail=f"Cleaning failed: {str(e)}")
 
     cleaned_wpm = calculate_wpm(cleaned_transcript, duration)
 
-    # Step 4: TTS with cloned voice
     try:
         tts_audio = elevenlabs_client.text_to_speech(cleaned_transcript, voice_id)
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"TTS generation failed: {str(e)}",
-        )
-
-    # Save audio to temp file
-    filename = f"{uuid.uuid4().hex}.mp3"
-    audio_path = AUDIO_DIR / filename
-    audio_path.write_bytes(tts_audio)
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail=f"TTS generation failed: {str(e)}")
 
     return {
         "raw_transcript": raw_transcript,
@@ -193,5 +168,26 @@ async def analyze(
         "total_fillers": total_fillers,
         "original_wpm": original_wpm,
         "cleaned_wpm": cleaned_wpm,
-        "audio_url": f"/audio/{filename}",
+        "audio_url": _save_audio(tts_audio),
     }
+
+
+@app.post("/tts")
+async def tts(
+    text: str = Form(...),
+    voice_id: str = Form(...),
+):
+    if not voice_id.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="voice_id is required.")
+    if not text.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="text is required.")
+
+    _cleanup_old_audio()
+
+    try:
+        tts_audio = elevenlabs_client.text_to_speech(text.strip(), voice_id)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail=f"TTS generation failed: {str(e)}")
+
+    return {"audio_url": _save_audio(tts_audio)}

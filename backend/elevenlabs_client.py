@@ -58,9 +58,10 @@ def text_to_speech(text: str, voice_id: str) -> bytes:
         "text": text,
         "model_id": "eleven_turbo_v2",
         "voice_settings": {
-            "stability": 0.5,
+            "stability": 0.55,
             "similarity_boost": 0.75,
         },
+        "speed": 0.85,
     }
 
     response = httpx.post(

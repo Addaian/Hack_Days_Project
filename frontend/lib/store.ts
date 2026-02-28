@@ -1,8 +1,3 @@
-/**
- * Module-level store for persisting VoiceUp results across client-side navigation.
- * Next.js App Router doesn't remount the root during client nav, so this stays alive.
- */
-
 export interface FillerEntry {
   word: string;
   count: number;
@@ -16,16 +11,29 @@ export interface VoiceUpResult {
   original_wpm: number;
   cleaned_wpm: number;
   audio_url: string;
-  original_audio_url: string; // blob: URL — valid as long as this module is in memory
+  original_audio_url: string;
   api_base: string;
+  voice_id?: string;
+  speech_duration?: number;
 }
 
 let _result: VoiceUpResult | null = null;
 let _originalBlob: Blob | null = null;
+let _voiceSampleBlob: Blob | null = null;
+let _speechBlob: Blob | null = null;
 
 export function setResult(result: VoiceUpResult, originalBlob: Blob) {
   _result = result;
   _originalBlob = originalBlob;
+}
+
+export function setRedoBlobs(voiceSampleBlob: Blob, speechBlob: Blob) {
+  _voiceSampleBlob = voiceSampleBlob;
+  _speechBlob = speechBlob;
+}
+
+export function getRedoBlobs(): { voiceSampleBlob: Blob | null; speechBlob: Blob | null } {
+  return { voiceSampleBlob: _voiceSampleBlob, speechBlob: _speechBlob };
 }
 
 export function getResult(): VoiceUpResult | null {
@@ -42,4 +50,10 @@ export function clearResult() {
   }
   _result = null;
   _originalBlob = null;
+}
+
+export function clearAll() {
+  clearResult();
+  _voiceSampleBlob = null;
+  _speechBlob = null;
 }

@@ -14,11 +14,29 @@ def _get_client() -> openai.OpenAI:
     return _client
 
 
-def clean_transcript(raw: str, audience: str = "General", style: str = "Neutral") -> str:
+def clean_transcript(
+    raw: str,
+    audiences: list[str] | None = None,
+    styles: list[str] | None = None,
+) -> str:
     client = _get_client()
 
-    audience_line = f" Also adjust phrasing to suit a {audience} audience." if audience != "General" else ""
-    style_line = f" Adjust tone to be {style}." if style != "Neutral" else ""
+    audiences = audiences or ["General"]
+    styles = styles or []
+
+    non_general = [a for a in audiences if a != "General"]
+    audience_line = (
+        f" Adjust phrasing to suit a {', '.join(non_general)} audience."
+        if non_general
+        else ""
+    )
+
+    style_map = {
+        "More Confident": "confident and assertive",
+        "Humorous": "lightly humorous and engaging",
+    }
+    style_parts = [style_map.get(s, s.lower()) for s in styles if s in style_map]
+    style_line = f" Adjust tone to be {' and '.join(style_parts)}." if style_parts else ""
 
     system_prompt = (
         "You are a speech coach. Given a spoken transcript, remove all filler words "
