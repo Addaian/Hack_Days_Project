@@ -43,6 +43,7 @@ export default function Home() {
   const [editingVoiceId, setEditingVoiceId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState<string | null>(null);
 
   useEffect(() => {
     setSavedVoices(getSavedVoices());
@@ -96,12 +97,13 @@ export default function Home() {
       activeAudio?.pause();
       activeAudio = null;
       setPreviewingVoiceId(null);
+      setPreviewLoading(null);
       return;
     }
     // Stop any other playing audio
     activeAudio?.pause();
     activeAudio = null;
-    setPreviewingVoiceId(voice_id);
+    setPreviewLoading(voice_id);
     try {
       const form = new FormData();
       form.append("text", "Hi, this is a preview of your cloned voice. Does it sound like you?");
@@ -111,6 +113,8 @@ export default function Home() {
       const { audio_url } = await res.json();
       const audio = new Audio(API + audio_url);
       activeAudio = audio;
+      setPreviewLoading(null);
+      setPreviewingVoiceId(voice_id);
       audio.play();
       audio.onended = () => {
         setPreviewingVoiceId(null);
@@ -118,6 +122,7 @@ export default function Home() {
       };
     } catch {
       setPreviewingVoiceId(null);
+      setPreviewLoading(null);
     }
   };
 
@@ -248,28 +253,41 @@ export default function Home() {
               {/* Saved voices list */}
               {savedVoices.length > 0 && (
                 <div className="flex flex-col gap-2.5">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Saved voices</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Saved voices</p>
+                    <span className="text-xs text-gray-400">{savedVoices.length} saved</span>
+                  </div>
                   {savedVoices.map((v) => {
                     const isSelected = savedVoiceId === v.voice_id;
                     const isEditing = editingVoiceId === v.voice_id;
                     const isPreviewing = previewingVoiceId === v.voice_id;
+                    const isLoadingPreview = previewLoading === v.voice_id;
                     return (
                       <div
                         key={v.voice_id}
                         onClick={() => { setSavedVoiceId(isSelected ? null : v.voice_id); setVoiceSampleBlob(null); }}
-                        className={`group flex items-center gap-3 px-4 py-3 rounded-xl border transition-all cursor-pointer ${
+                        className={`group flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
                           isSelected
-                            ? "bg-indigo-50 border-indigo-300 shadow-sm"
-                            : "bg-gray-50/80 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/40"
+                            ? "bg-indigo-50 border-indigo-400 shadow-md shadow-indigo-100/50 scale-[1.02]"
+                            : "bg-white border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/40 hover:shadow-sm"
                         }`}
                       >
-                        {/* Radio indicator */}
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                          isSelected ? "border-indigo-500 bg-indigo-500" : "border-gray-300 group-hover:border-indigo-300"
+                        {/* Radio indicator with animation */}
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
+                          isSelected ? "border-indigo-500 bg-indigo-500 scale-110" : "border-gray-300 group-hover:border-indigo-400"
                         }`}>
                           {isSelected && (
-                            <div className="w-2 h-2 rounded-full bg-white" />
+                            <div className="w-2 h-2 rounded-full bg-white animate-[pulse_2s_ease-in-out_infinite]" />
                           )}
+                        </div>
+
+                        {/* Voice icon */}
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500"
+                        }`}>
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                          </svg>
                         </div>
 
                         {/* Name / edit input */}
@@ -285,50 +303,68 @@ export default function Home() {
                                 if (e.key === "Escape") setEditingVoiceId(null);
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              className="w-full text-sm font-medium text-gray-800 bg-white border border-indigo-300 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                              className="w-full text-sm font-semibold text-gray-900 bg-white border border-indigo-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             />
                           ) : (
-                            <p className="text-sm font-medium text-gray-800 truncate">{v.name}</p>
+                            <div className="flex flex-col gap-0.5">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{v.name}</p>
+                              <p className="text-xs text-gray-400">
+                                {new Date(v.createdAt).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit"
+                                })}
+                              </p>
+                            </div>
                           )}
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex items-center gap-0.5 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
                           <button
                             onClick={(e) => handlePreview(v.voice_id, e)}
-                            title={isPreviewing ? "Stop preview" : "Preview voice"}
-                            className={`p-2 rounded-lg transition-colors ${
+                            disabled={isLoadingPreview}
+                            title={isPreviewing ? "Stop preview" : isLoadingPreview ? "Loading preview..." : "Preview voice"}
+                            className={`p-2.5 rounded-lg transition-all duration-200 disabled:opacity-60 ${
                               isPreviewing
-                                ? "bg-indigo-100 text-indigo-600"
-                                : "text-gray-400 hover:text-indigo-500 hover:bg-indigo-50"
+                                ? "bg-indigo-600 text-white shadow-sm"
+                                : isLoadingPreview
+                                ? "bg-indigo-100 text-indigo-400"
+                                : "text-gray-400 hover:text-indigo-600 hover:bg-indigo-50"
                             }`}
                           >
-                            {isPreviewing ? (
-                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                            {isLoadingPreview ? (
+                              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                              </svg>
+                            ) : isPreviewing ? (
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                 <rect x="6" y="4" width="4" height="16" rx="1" />
                                 <rect x="14" y="4" width="4" height="16" rx="1" />
                               </svg>
                             ) : (
-                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z" />
                               </svg>
                             )}
                           </button>
                           <button
                             onClick={(e) => startRename(v, e)}
-                            title="Rename"
-                            className="p-2 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors"
+                            title="Rename voice"
+                            className="p-2.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
                           </button>
                           <button
                             onClick={(e) => handleDeleteVoice(v.voice_id, e)}
-                            title="Delete"
-                            className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            title="Delete voice"
+                            className="p-2.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>
@@ -346,9 +382,19 @@ export default function Home() {
               )}
 
               {/* Reading prompt */}
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-4">
-                <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">Read this aloud</p>
-                <p className="text-gray-700 text-sm leading-relaxed italic">&ldquo;{READING_PROMPT}&rdquo;</p>
+              <div className="relative bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 border border-indigo-200 rounded-2xl p-5 shadow-sm">
+                <div className="absolute top-4 right-4 opacity-10">
+                  <svg className="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                  </svg>
+                </div>
+                <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                  Read this aloud
+                </p>
+                <p className="text-gray-800 text-sm leading-relaxed">&ldquo;{READING_PROMPT}&rdquo;</p>
               </div>
 
               <Recorder
@@ -361,10 +407,10 @@ export default function Home() {
               {canProceedFromStep1 && (
                 <button
                   onClick={() => setStep(2)}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-200"
+                  className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-200/60 hover:shadow-xl hover:shadow-indigo-300/60 hover:scale-[1.02] group"
                 >
                   Next: Record Your Speech
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -393,17 +439,20 @@ export default function Home() {
               {speechBlob && (
                 <button
                   onClick={() => setStep(3)}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-200"
+                  className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-200/60 hover:shadow-xl hover:shadow-indigo-300/60 hover:scale-[1.02] group"
                 >
                   Next: Configure
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
               )}
 
-              <button onClick={() => setStep(1)} className="text-sm text-gray-400 hover:text-gray-600 underline text-center transition-colors">
-                ← Back
+              <button onClick={() => setStep(1)} className="flex items-center justify-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-medium text-center transition-colors group">
+                <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Voice Sample
               </button>
             </div>
           </div>
@@ -432,25 +481,44 @@ export default function Home() {
                   )}
                 </div>
                 <button
-                  onClick={() => setStep(2)}
+                  onClick={() => { setSpeechBlob(null); setSpeechDuration(0); }}
                   className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold transition-colors"
                 >
                   Change
                 </button>
               </div>
 
+              {/* Re-record/upload section (shown when changing) */}
+              {!speechBlob && (
+                <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-6">
+                  <p className="text-sm font-semibold text-indigo-900 mb-4">Record or upload your speech</p>
+                  <Recorder
+                    label="Your speech (up to 5 min)"
+                    maxSeconds={300}
+                    minSeconds={3}
+                    allowUpload
+                    onComplete={(blob, duration) => { setSpeechBlob(blob); setSpeechDuration(duration); }}
+                  />
+                </div>
+              )}
+
               {/* Audience */}
-              <div className="flex flex-col gap-2.5">
-                <p className="text-sm font-semibold text-gray-700">Target Audience</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Target Audience
+                </p>
+                <div className="flex flex-wrap gap-2.5">
                   {AUDIENCES.map((a) => (
                     <button
                       key={a}
                       onClick={() => toggleAudience(a)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                      className={`px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all duration-200 ${
                         audiences.includes(a)
-                          ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
+                          ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200/50 scale-105"
+                          : "bg-white border-gray-200 text-gray-700 hover:border-indigo-400 hover:text-indigo-600 hover:shadow-sm"
                       }`}
                     >
                       {a}
@@ -460,19 +528,23 @@ export default function Home() {
               </div>
 
               {/* Tone */}
-              <div className="flex flex-col gap-2.5">
-                <p className="text-sm font-semibold text-gray-700">
-                  Tone <span className="font-normal text-gray-400">(optional)</span>
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Tone
+                  <span className="text-xs font-normal text-gray-400 ml-1">(optional)</span>
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {STYLES.map((s) => (
                     <button
                       key={s}
                       onClick={() => toggleStyle(s)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                      className={`px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all duration-200 ${
                         styles.includes(s)
-                          ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
+                          ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200/50 scale-105"
+                          : "bg-white border-gray-200 text-gray-700 hover:border-indigo-400 hover:text-indigo-600 hover:shadow-sm"
                       }`}
                     >
                       {s}
@@ -493,7 +565,7 @@ export default function Home() {
               <button
                 onClick={handleProcess}
                 disabled={loading || !speechBlob}
-                className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-base shadow-lg shadow-indigo-200/60 hover:shadow-indigo-300/60"
+                className="w-full bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-700 hover:via-violet-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white font-bold py-4.5 rounded-xl transition-all flex items-center justify-center gap-2.5 text-base shadow-xl shadow-indigo-300/50 hover:shadow-2xl hover:shadow-indigo-400/50 hover:scale-[1.02]"
               >
                 {loading ? (
                   <>
@@ -505,14 +577,22 @@ export default function Home() {
                   </>
                 ) : (
                   <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
                     Process My Speech
-                    <span className="text-indigo-200 text-lg">✨</span>
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
                   </>
                 )}
               </button>
 
-              <button onClick={() => setStep(2)} className="text-sm text-gray-400 hover:text-gray-600 underline text-center transition-colors">
-                ← Back
+              <button onClick={() => setStep(2)} className="flex items-center justify-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-medium text-center transition-colors group">
+                <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Recording
               </button>
             </div>
           </div>

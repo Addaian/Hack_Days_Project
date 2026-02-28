@@ -135,29 +135,39 @@ export default function Recorder({
   const tooShort = status === "recording" && elapsed < minSeconds;
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
+    <div className="flex flex-col items-center gap-4">
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{label}</p>
 
       {error && (
-        <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg text-center max-w-xs">
+        <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-xl text-center max-w-xs">
+          <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
           {error}
-        </p>
+        </div>
       )}
 
       {status === "idle" && (
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center gap-4">
           <button
             onClick={startRecording}
-            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-full transition-colors shadow-sm"
+            className="flex items-center gap-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold px-8 py-3.5 rounded-full transition-all shadow-lg shadow-red-200/50 hover:shadow-xl hover:shadow-red-300/50 hover:scale-105"
           >
-            <span className="w-3 h-3 bg-white rounded-full" />
+            <span className="w-3 h-3 bg-white rounded-full animate-pulse" />
             Start Recording
           </button>
           {allowUpload && (
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-xs text-gray-400">or</span>
-              <label className="cursor-pointer text-sm text-indigo-600 hover:text-indigo-800 font-medium underline underline-offset-2 transition-colors">
-                Upload an audio file
+            <>
+              <div className="flex items-center gap-3 text-gray-300 text-xs w-full max-w-xs">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-gray-400 font-medium">or</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+              <label className="cursor-pointer group flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-semibold transition-all px-6 py-2.5 rounded-xl border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Upload audio file
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -166,39 +176,51 @@ export default function Recorder({
                   onChange={handleFileUpload}
                 />
               </label>
-            </div>
+            </>
           )}
         </div>
       )}
 
       {status === "recording" && (
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2 text-red-500 font-mono text-xl font-semibold">
-            <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-            {formatTime(elapsed)}
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-3 bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 px-8 py-6 rounded-2xl shadow-lg">
+            <div className="flex items-center gap-3 text-red-600 font-mono text-3xl font-bold">
+              <span className="w-4 h-4 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-300" />
+              {formatTime(elapsed)}
+            </div>
             {maxSeconds && (
-              <span className="text-gray-400 text-sm font-normal">/ {formatTime(maxSeconds)}</span>
+              <span className="text-gray-500 text-sm font-medium">of {formatTime(maxSeconds)}</span>
             )}
           </div>
           <button
             onClick={stopRecording}
             disabled={tooShort}
-            className="bg-gray-800 hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-2 rounded-full transition-colors"
+            className="bg-gray-900 hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-8 py-3 rounded-full transition-all shadow-md hover:shadow-lg"
           >
-            {tooShort ? `Hold on… (${minSeconds - elapsed}s)` : "Stop"}
+            {tooShort ? `Hold on… (${minSeconds - elapsed}s)` : "Stop Recording"}
           </button>
         </div>
       )}
 
       {status === "done" && (
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2 text-green-600 font-semibold">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex items-center gap-3 text-green-700 font-semibold bg-green-50 border border-green-200 px-5 py-3 rounded-xl shadow-sm">
+            <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {uploadedFileName ? `Uploaded: ${uploadedFileName}` : `Recorded (${formatTime(elapsed)})`}
+            <div className="flex flex-col">
+              <span className="text-sm">
+                {uploadedFileName ? "File uploaded" : "Recording complete"}
+              </span>
+              <span className="text-xs text-green-600">
+                {uploadedFileName || `${formatTime(elapsed)} duration`}
+              </span>
+            </div>
           </div>
-          <button onClick={reset} className="text-sm text-gray-400 hover:text-gray-600 underline">
+          <button onClick={reset} className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 font-semibold underline underline-offset-2 transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
             {uploadedFileName ? "Upload different file" : "Re-record"}
           </button>
         </div>

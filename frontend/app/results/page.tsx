@@ -185,17 +185,20 @@ export default function ResultsPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 pb-8">
           <button
             onClick={handleRedo}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 font-semibold px-6 py-3 rounded-xl transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 border-2 border-indigo-300 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-400 font-bold px-8 py-3.5 rounded-xl transition-all shadow-sm hover:shadow-md group"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             Redo with Same Recording
           </button>
           <button
             onClick={handleStartOver}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
           >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
             Start Over
           </button>
         </div>
