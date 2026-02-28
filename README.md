@@ -1,4 +1,4 @@
-# VoiceUp
+# Alto
 
 Record yourself speaking and hear a cleaned-up version played back in your own cloned voice — filler words removed, phrasing tightened.
 

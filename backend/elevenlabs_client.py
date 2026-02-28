@@ -44,19 +44,19 @@ def create_clone(audio_bytes: bytes, name: str | None = None) -> str:
     return voice_id
 
 
-def text_to_speech(text: str, voice_id: str, speed: float = 0.85) -> bytes:
+def text_to_speech(text: str, voice_id: str, speed: float = 0.70) -> bytes:
     """Convert text to speech using a cloned voice, return audio bytes (MP3).
 
     Args:
         text: The text to convert to speech
         voice_id: The ElevenLabs voice ID to use
-        speed: Speech speed multiplier (0.5 to 1.0). Lower is slower. Default 0.85.
+        speed: Speech speed multiplier (0.5 to 0.85). Lower is slower. Default 0.70.
     """
     if not text.strip():
         raise ValueError("Cannot generate TTS for empty text.")
 
-    # Clamp speed to valid range
-    speed = max(0.5, min(1.0, speed))
+    # Clamp speed to valid range (slower for better spacing)
+    speed = max(0.5, min(0.85, speed))
 
     headers = {
         "xi-api-key": _api_key(),
@@ -67,8 +67,9 @@ def text_to_speech(text: str, voice_id: str, speed: float = 0.85) -> bytes:
         "text": text,
         "model_id": "eleven_turbo_v2",
         "voice_settings": {
-            "stability": 0.55,
-            "similarity_boost": 0.75,
+            "stability": 0.70,  # Higher stability for more consistent voice reproduction
+            "similarity_boost": 0.90,  # Higher similarity for more accurate voice cloning
+            "style": 0.0,  # Disable style exaggeration for more natural sound
         },
         "speed": speed,
     }

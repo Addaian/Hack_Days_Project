@@ -88,14 +88,14 @@ def calculate_tts_speed(original_word_count: int, cleaned_word_count: int, origi
     but not go too fast. We slow down the TTS to keep WPM similar.
     """
     if original_word_count == 0 or cleaned_word_count == 0 or original_duration <= 0:
-        return 0.85  # Default speed
+        return 0.70  # Default speed (slower)
 
     # Calculate what the target duration should be if we maintain original WPM
     original_wpm = original_word_count / (original_duration / 60)
     target_duration = (cleaned_word_count / original_wpm) * 60  # in seconds
 
     # ElevenLabs at speed=1.0 speaks at roughly 150-180 WPM
-    # At speed=0.85, it's roughly 130-150 WPM
+    # At speed=0.70, it's roughly 105-125 WPM (slower, better spacing)
     # We want to calculate speed such that the TTS duration matches target_duration
 
     # Estimate: at speed=1.0, TTS would take (cleaned_word_count / 160) * 60 seconds
@@ -105,11 +105,14 @@ def calculate_tts_speed(original_word_count: int, cleaned_word_count: int, origi
     if estimated_duration_at_full_speed > 0:
         speed = estimated_duration_at_full_speed / target_duration
     else:
-        speed = 0.85
+        speed = 0.70
 
-    # Clamp to reasonable range (0.6 to 1.0)
-    # Don't go below 0.6 as it sounds too slow
-    speed = max(0.6, min(1.0, speed))
+    # Apply a slowdown bias factor to add more spacing between words
+    speed = speed * 0.85  # Make it 15% slower for better spacing
+
+    # Clamp to reasonable range (0.5 to 0.85)
+    # Allow slower speeds for more natural pacing
+    speed = max(0.5, min(0.85, speed))
 
     return speed
 

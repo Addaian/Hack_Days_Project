@@ -32,7 +32,7 @@ Monorepo with two independent services:
 
 ```
 browser → POST /clone  → ElevenLabs (voice clone) → voice_id
-browser → POST /analyze → ElevenLabs Scribe STT → GPT-4o → ElevenLabs TTS → .mp3 saved to /tmp/voiceup_audio/
+browser → POST /analyze → ElevenLabs Scribe STT → GPT-4o → ElevenLabs TTS → .mp3 saved to /tmp/alto_audio/
 ```
 
 ### Frontend state management
@@ -57,7 +57,7 @@ Each external API has its own module with a singleton client:
 
 ### Audio file lifecycle
 
-ElevenLabs TTS output is written to `/tmp/voiceup_audio/{uuid}.mp3` and served via FastAPI `StaticFiles` mounted at `/audio`. Files older than 1 hour are deleted on every `/analyze` request inside `_cleanup_old_audio()`.
+ElevenLabs TTS output is written to `/tmp/alto_audio/{uuid}.mp3` and served via FastAPI `StaticFiles` mounted at `/audio`. Files older than 1 hour are deleted on every `/analyze` request inside `_cleanup_old_audio()`.
 
 ### CORS
 
