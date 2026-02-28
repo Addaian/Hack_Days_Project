@@ -88,33 +88,23 @@ def calculate_tts_speed(original_word_count: int, cleaned_word_count: int, origi
     but not go too fast. We slow down the TTS to keep WPM similar.
     """
     if original_word_count == 0 or cleaned_word_count == 0 or original_duration <= 0:
-        return 0.65  # Default speed (slower)
+        return 0.75  # Default: mid-range natural pace
 
-    # Calculate what the target duration should be if we maintain original WPM
+    # Calculate original WPM and the target duration for the cleaned text
+    # to maintain the same speaking pace
     original_wpm = original_word_count / (original_duration / 60)
-    target_duration = (cleaned_word_count / original_wpm) * 60  # in seconds
+    target_duration = (cleaned_word_count / original_wpm) * 60  # seconds
 
-    # ElevenLabs at speed=1.0 speaks at roughly 150-180 WPM
-    # At speed=0.70, it's roughly 105-125 WPM (slower, better spacing)
-    # We want to calculate speed such that the TTS duration matches target_duration
-
-    # Estimate: at speed=1.0, TTS would take (cleaned_word_count / 160) * 60 seconds
+    # ElevenLabs eleven_turbo_v2 speaks at ~160 WPM at speed=1.0
+    # Required speed = (time model would take at 1.0) / (target time)
+    # Which simplifies to: original_wpm / 160
     estimated_duration_at_full_speed = (cleaned_word_count / 160) * 60
+    speed = estimated_duration_at_full_speed / target_duration  # == original_wpm / 160
 
-    # Calculate required speed multiplier
-    if estimated_duration_at_full_speed > 0:
-        speed = estimated_duration_at_full_speed / target_duration
-    else:
-        speed = 0.70
+    # Clamp to ElevenLabs supported range
+    speed = max(0.5, min(1.0, speed))
 
-    # Apply a slowdown bias factor to add more spacing between words
-    speed = speed * 0.80  # Make it 20% slower for better spacing
-
-    # Clamp to reasonable range (0.5 to 0.78)
-    # Allow slower speeds for more natural pacing
-    speed = max(0.5, min(0.78, speed))
-
-    return speed
+    return round(speed, 3)
 
 
 def _save_audio(audio_bytes: bytes) -> str:
