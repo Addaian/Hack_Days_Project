@@ -88,7 +88,7 @@ def calculate_tts_speed(original_word_count: int, cleaned_word_count: int, origi
     but not go too fast. We slow down the TTS to keep WPM similar.
     """
     if original_word_count == 0 or cleaned_word_count == 0 or original_duration <= 0:
-        return 0.70  # Default speed (slower)
+        return 0.65  # Default speed (slower)
 
     # Calculate what the target duration should be if we maintain original WPM
     original_wpm = original_word_count / (original_duration / 60)
@@ -108,11 +108,11 @@ def calculate_tts_speed(original_word_count: int, cleaned_word_count: int, origi
         speed = 0.70
 
     # Apply a slowdown bias factor to add more spacing between words
-    speed = speed * 0.85  # Make it 15% slower for better spacing
+    speed = speed * 0.80  # Make it 20% slower for better spacing
 
-    # Clamp to reasonable range (0.5 to 0.85)
+    # Clamp to reasonable range (0.5 to 0.78)
     # Allow slower speeds for more natural pacing
-    speed = max(0.5, min(0.85, speed))
+    speed = max(0.5, min(0.78, speed))
 
     return speed
 
