@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AudioPlayer from "@/components/AudioPlayer";
+import TranscriptDiff from "@/components/TranscriptDiff";
 import TranscriptEditor from "@/components/TranscriptEditor";
 import { getResult, clearResult, clearAll, type VoiceUpResult } from "@/lib/store";
 
@@ -48,11 +49,11 @@ export default function ResultsPage() {
     );
   }
 
-  const hasWpm = result.original_wpm > 0 && result.cleaned_wpm > 0;
-  const wpmDelta = hasWpm ? result.original_wpm - result.cleaned_wpm : 0;
-  const paceLabel = hasWpm
-    ? wpmDelta > 0 ? `−${Math.round((wpmDelta / result.original_wpm) * 100)}% pace` : `+${Math.round((Math.abs(wpmDelta) / result.original_wpm) * 100)}% pace`
-    : "—";
+  const hasWpm = result.original_wpm > 0;
+  const rawWordCount = result.raw_transcript.trim().split(/\s+/).filter(Boolean).length;
+  const cleanedWordCount = result.cleaned_transcript.trim().split(/\s+/).filter(Boolean).length;
+  const wordsSaved = Math.max(0, rawWordCount - cleanedWordCount);
+  const fillerRate = rawWordCount > 0 ? Math.round((result.total_fillers / rawWordCount) * 100) : 0;
 
   return (
     <>
@@ -77,8 +78,8 @@ export default function ResultsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Fillers Removed" value={String(result.total_fillers)} accent="red" />
           <StatCard label="Original WPM" value={hasWpm ? String(result.original_wpm) : "—"} />
-          <StatCard label="Cleaned WPM" value={hasWpm ? String(result.cleaned_wpm) : "—"} />
-          <StatCard label="Pace Change" value={paceLabel} accent="green" />
+          <StatCard label="Words Saved" value={String(wordsSaved)} accent="green" />
+          <StatCard label="Filler Rate" value={rawWordCount > 0 ? `${fillerRate}%` : "—"} accent={fillerRate > 10 ? "red" : "green"} />
         </div>
 
         {/* Audio players */}
@@ -101,6 +102,15 @@ export default function ResultsPage() {
             </div>
           </Section>
         )}
+
+        {/* Transcript diff */}
+        <Section title="Original vs Cleaned">
+          <TranscriptDiff
+            raw={result.raw_transcript}
+            cleaned={result.cleaned_transcript}
+            fillers={result.fillers}
+          />
+        </Section>
 
         {/* Transcript editor */}
         <Section
